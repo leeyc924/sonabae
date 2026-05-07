@@ -1,5 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
+import { isValidIsoDate, todayIso } from './dateUtils';
+import { DiaryCard, buildDiaryCards } from './diary';
+
+export { isValidIsoDate, todayIso };
+export { buildDiaryCards };
+export type { DiaryCard };
 
 const DRAFT_KEY = 'sonabae.match_draft.v1';
 const MATCHES_KEY = 'sonabae.matches.v1';
@@ -43,27 +49,6 @@ export function emptyDraft(): MatchDraft {
     memo: '',
     updatedAt: new Date().toISOString(),
   };
-}
-
-export function isValidIsoDate(value: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const [y, m, d] = value.split('-').map((s) => Number.parseInt(s, 10));
-  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
-  const dt = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(dt.getTime())) return false;
-  return (
-    dt.getUTCFullYear() === y &&
-    dt.getUTCMonth() + 1 === m &&
-    dt.getUTCDate() === d
-  );
-}
-
-export function todayIso(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
 }
 
 export async function saveDraft(draft: MatchDraft): Promise<void> {
@@ -145,4 +130,16 @@ export async function listMatches(): Promise<MatchRecord[]> {
   } catch {
     return [];
   }
+}
+
+export async function listDiaryCards(today: string = todayIso()): Promise<DiaryCard[]> {
+  const matches = await listMatches();
+  return buildDiaryCards(matches, today);
+}
+
+export async function getMatchesForDate(date: string): Promise<MatchRecord[]> {
+  const matches = await listMatches();
+  return matches
+    .filter((m) => m.date === date)
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }

@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test:analytics": "npx --yes tsx --test src/services/analytics/__tests__/piiRegression.test.ts"
+    "test:analytics": "npx --yes tsx --test src/services/analytics/__tests__/piiRegression.test.ts",
+    "test:diary": "npx --yes tsx --test src/services/__tests__/diaryCards.test.ts"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

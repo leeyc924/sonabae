@@ -1,44 +1,68 @@
 import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  FlatList,
+  ListRenderItemInfo,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
-import { MatchRecord, listMatches } from '../services/matchStorage';
+import { DiaryCard, listDiaryCards } from '../services/matchStorage';
 import { colors, spacing, typography } from '../theme/tokens';
 
 type Props = {
   refreshKey: number;
   onStartMatchEntry: () => void;
+  onOpenDiary: (date: string) => void;
   onOpenGallery: () => void;
 };
 
-export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenGallery }: Props) {
-  const [matches, setMatches] = useState<MatchRecord[] | null>(null);
+export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenDiary, onOpenGallery }: Props) {
+  const [cards, setCards] = useState<DiaryCard[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    listMatches()
+    listDiaryCards()
       .then((list) => {
-        if (!cancelled) setMatches(list);
+        if (!cancelled) setCards(list);
       })
       .catch(() => {
-        if (!cancelled) setMatches([]);
+        if (!cancelled) setCards([]);
       });
     return () => {
       cancelled = true;
     };
   }, [refreshKey]);
 
-  const isEmpty = matches !== null && matches.length === 0;
+  const isEmpty = cards !== null && cards.length === 0;
+  const totalMatches = (cards ?? []).reduce((sum, c) => sum + c.matchCount, 0);
 
-  return (
-    <SafeAreaView style={styles.safe}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>오늘의 일기</Text>
-        <Text style={styles.subtitle}>
-          {isEmpty ? '아직 기록된 경기가 없어요' : `누적 ${matches?.length ?? 0}경기`}
-        </Text>
+  const header = (
+    <View style={styles.header}>
+      <Text style={styles.title}>오늘의 일기</Text>
+      <Text style={styles.subtitle}>
+        {isEmpty ? '아직 기록된 경기가 없어요' : `최근 30일 · ${totalMatches}경기`}
+      </Text>
+      {!isEmpty && cards && cards.length > 0 && (
+        <Button label="새 경기 기록" onPress={onStartMatchEntry} style={styles.newCta} />
+      )}
+    </View>
+  );
 
-        {isEmpty && (
+  const footer = (
+    <Pressable onPress={onOpenGallery} style={styles.galleryLink} hitSlop={8}>
+      <Text style={styles.galleryLinkText}>상태 갤러리 (디자인 QA)</Text>
+    </Pressable>
+  );
+
+  if (isEmpty) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.content}>
+          {header}
           <Card style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>첫 경기를 기록해 보세요</Text>
             <Text style={styles.emptyBody}>
@@ -46,49 +70,72 @@ export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenGallery }: Pro
             </Text>
             <Button label="경기 기록하기" onPress={onStartMatchEntry} style={styles.cta} />
           </Card>
-        )}
+          {footer}
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-        {matches && matches.length > 0 && (
-          <View style={styles.list}>
-            <Button label="새 경기 기록" onPress={onStartMatchEntry} />
-            {matches.map((m) => (
-              <Card key={m.id} style={styles.recordCard}>
-                <Text style={styles.recordDate}>{m.date} · {m.format === 'doubles' ? '복식' : '단식'}</Text>
-                <Text style={styles.recordScore}>{m.myScore} : {m.opponentScore}</Text>
-                <Text style={styles.recordPeople} numberOfLines={1}>
-                  {m.format === 'doubles'
-                    ? `나/${m.partnerNickname} vs ${m.opponent1Nickname}/${m.opponent2Nickname}`
-                    : `나 vs ${m.opponent1Nickname}`}
-                </Text>
-                {m.memo ? <Text style={styles.recordMemo} numberOfLines={2}>{m.memo}</Text> : null}
-              </Card>
-            ))}
-          </View>
-        )}
-
-        <Pressable onPress={onOpenGallery} style={styles.galleryLink} hitSlop={8}>
-          <Text style={styles.galleryLinkText}>상태 갤러리 (디자인 QA)</Text>
-        </Pressable>
-      </ScrollView>
+  return (
+    <SafeAreaView style={styles.safe}>
+      <FlatList<DiaryCard>
+        data={cards ?? []}
+        keyExtractor={(item) => item.date}
+        renderItem={renderCard(onOpenDiary)}
+        ListHeaderComponent={header}
+        ListFooterComponent={footer}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={Separator}
+        initialNumToRender={8}
+        windowSize={7}
+        removeClippedSubviews
+      />
     </SafeAreaView>
+  );
+}
+
+function Separator() {
+  return <View style={{ height: spacing.md }} />;
+}
+
+function renderCard(onOpenDiary: (date: string) => void) {
+  return ({ item }: ListRenderItemInfo<DiaryCard>) => (
+    <Pressable
+      onPress={() => onOpenDiary(item.date)}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.date} 일기 상세 열기`}
+    >
+      <Card style={styles.diaryCard}>
+        <Text style={styles.diaryDate}>{item.date}</Text>
+        <Text style={styles.diarySummary}>
+          {item.matchCount}경기 {item.wins}승 {item.losses}패
+        </Text>
+        {item.memos.length > 0 && (
+          <Text style={styles.diaryMemo} numberOfLines={2}>
+            {item.memos.join(' · ')}
+          </Text>
+        )}
+      </Card>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxxl },
+  content: { padding: spacing.lg, gap: spacing.md, flex: 1 },
+  listContent: { padding: spacing.lg, paddingBottom: spacing.xxxl },
+  header: { gap: spacing.xs, marginBottom: spacing.md },
   title: { ...typography.display, color: colors.textPrimary },
   subtitle: { ...typography.body, color: colors.textSecondary },
+  newCta: { marginTop: spacing.md },
   emptyCard: { gap: spacing.md, marginTop: spacing.md },
   emptyTitle: { ...typography.heading, color: colors.textPrimary },
   emptyBody: { ...typography.body, color: colors.textSecondary },
   cta: { marginTop: spacing.sm },
-  list: { gap: spacing.md, marginTop: spacing.sm },
-  recordCard: { gap: spacing.xs },
-  recordDate: { ...typography.label, color: colors.textSecondary },
-  recordScore: { ...typography.title, color: colors.textPrimary },
-  recordPeople: { ...typography.body, color: colors.textSecondary },
-  recordMemo: { ...typography.caption, color: colors.textMuted },
+  diaryCard: { gap: spacing.xs },
+  diaryDate: { ...typography.label, color: colors.textSecondary },
+  diarySummary: { ...typography.title, color: colors.textPrimary },
+  diaryMemo: { ...typography.caption, color: colors.textMuted },
   galleryLink: { alignSelf: 'center', marginTop: spacing.xl, paddingVertical: spacing.sm },
   galleryLinkText: { ...typography.caption, color: colors.textMuted, textDecorationLine: 'underline' },
 });
