@@ -1,0 +1,17 @@
+### Tab 1 — Roster
+tester_id,persona_fit,device,invited_at,installed_at,first_record_at,status,notes
+T01,P1,iOS 17.5 / iPhone 14,,,,invited,
+T02,,,,,,invited,
+
+### Tab 2 — Quant (week N)
+tester_id,week,matches_recorded,diary_days,review_views,input_median_seconds,d1_return,d3_return,d7_return
+T01,1,,,,,,,
+T01,2,,,,,,,
+
+### Tab 3 — Qual
+date,tester_id,channel,category,severity,raw_quote_masked,qa_repro_status,linked_issue
+2026-05-XX,T0X,in-app/DM/interview,bug|usability|feature_req|praise,critical|high|medium|low,"[테스터T0X] (마스킹된 인용)",repro|cant_repro|spec,NAS-XX
+
+### Tab 4 — Bug log
+linked_issue,opened_at,severity,title,owner,status,closed_at
+NAS-XX,2026-05-XX,high,짧은 한 줄 요약 (PII 없음),AppDeveloper,open,
