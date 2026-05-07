@@ -205,7 +205,7 @@ export function MatchEntryScreen({ onCancel, onSaved }: Props) {
         <Button
           label={submitting ? '저장 중…' : '기록 저장'}
           onPress={handleSubmit}
-          disabled={submitting}
+          disabled={submitting || !draft.myScore || !draft.opponentScore}
           style={{ marginTop: spacing.md }}
         />
       </ScrollView>
