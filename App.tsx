@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MatchEntryScreen } from './src/screens/MatchEntryScreen';
 import { DiaryDetailScreen } from './src/screens/DiaryDetailScreen';
+import { WeeklyStatsScreen } from './src/screens/WeeklyStatsScreen';
 import { StateGallery } from './src/screens/states/StateGallery';
 import { track } from './src/services/analytics';
 import { getOrCreateUserId } from './src/services/userId';
@@ -13,6 +14,7 @@ type Route =
   | { name: 'home' }
   | { name: 'matchEntry' }
   | { name: 'diaryDetail'; date: string }
+  | { name: 'weeklyStats' }
   | { name: 'gallery' };
 
 export default function App() {
@@ -34,6 +36,7 @@ export default function App() {
           refreshKey={refreshKey}
           onStartMatchEntry={() => setRoute({ name: 'matchEntry' })}
           onOpenDiary={(date) => setRoute({ name: 'diaryDetail', date })}
+          onOpenWeeklyStats={() => setRoute({ name: 'weeklyStats' })}
           onOpenGallery={() => setRoute({ name: 'gallery' })}
         />
       )}
@@ -51,6 +54,9 @@ export default function App() {
           date={route.date}
           onBack={() => setRoute({ name: 'home' })}
         />
+      )}
+      {route.name === 'weeklyStats' && (
+        <WeeklyStatsScreen onBack={() => setRoute({ name: 'home' })} />
       )}
       {route.name === 'gallery' && (
         <View style={styles.galleryWrap}>

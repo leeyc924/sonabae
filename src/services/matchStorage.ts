@@ -2,10 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
 import { isValidIsoDate, todayIso } from './dateUtils';
 import { DiaryCard, buildDiaryCards } from './diary';
+import { WeeklyStats, buildWeeklyStats } from './weeklyStats';
 
 export { isValidIsoDate, todayIso };
 export { buildDiaryCards };
 export type { DiaryCard };
+export type { WeeklyStats };
 
 const DRAFT_KEY = 'sonabae.match_draft.v1';
 const MATCHES_KEY = 'sonabae.matches.v1';
@@ -135,6 +137,11 @@ export async function listMatches(): Promise<MatchRecord[]> {
 export async function listDiaryCards(today: string = todayIso()): Promise<DiaryCard[]> {
   const matches = await listMatches();
   return buildDiaryCards(matches, today);
+}
+
+export async function getWeeklyStats(today: string = todayIso()): Promise<WeeklyStats> {
+  const matches = await listMatches();
+  return buildWeeklyStats(matches, today);
 }
 
 export async function getMatchesForDate(date: string): Promise<MatchRecord[]> {

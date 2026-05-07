@@ -17,10 +17,11 @@ type Props = {
   refreshKey: number;
   onStartMatchEntry: () => void;
   onOpenDiary: (date: string) => void;
+  onOpenWeeklyStats: () => void;
   onOpenGallery: () => void;
 };
 
-export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenDiary, onOpenGallery }: Props) {
+export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenDiary, onOpenWeeklyStats, onOpenGallery }: Props) {
   const [cards, setCards] = useState<DiaryCard[] | null>(null);
 
   useEffect(() => {
@@ -47,7 +48,12 @@ export function HomeScreen({ refreshKey, onStartMatchEntry, onOpenDiary, onOpenG
         {isEmpty ? '아직 기록된 경기가 없어요' : `최근 30일 · ${totalMatches}경기`}
       </Text>
       {!isEmpty && cards && cards.length > 0 && (
-        <Button label="새 경기 기록" onPress={onStartMatchEntry} style={styles.newCta} />
+        <View style={styles.headerActions}>
+          <Button label="새 경기 기록" onPress={onStartMatchEntry} style={styles.newCta} />
+          <Pressable onPress={onOpenWeeklyStats} hitSlop={8} accessibilityRole="button" accessibilityLabel="주간 통계 열기">
+            <Text style={styles.statsLink}>주간 통계 보기 →</Text>
+          </Pressable>
+        </View>
       )}
     </View>
   );
@@ -128,6 +134,8 @@ const styles = StyleSheet.create({
   title: { ...typography.display, color: colors.textPrimary },
   subtitle: { ...typography.body, color: colors.textSecondary },
   newCta: { marginTop: spacing.md },
+  headerActions: { gap: spacing.sm },
+  statsLink: { ...typography.bodyStrong, color: colors.primary, marginTop: spacing.xs },
   emptyCard: { gap: spacing.md, marginTop: spacing.md },
   emptyTitle: { ...typography.heading, color: colors.textPrimary },
   emptyBody: { ...typography.body, color: colors.textSecondary },
