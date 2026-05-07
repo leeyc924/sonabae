@@ -45,6 +45,19 @@ export function emptyDraft(): MatchDraft {
   };
 }
 
+export function isValidIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [y, m, d] = value.split('-').map((s) => Number.parseInt(s, 10));
+  if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const dt = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(dt.getTime())) return false;
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() + 1 === m &&
+    dt.getUTCDate() === d
+  );
+}
+
 export function todayIso(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -89,6 +102,9 @@ export async function saveMatch(input: SaveMatchInput): Promise<SaveMatchResult>
   }
   if (!input.date) {
     return { ok: false, error: '날짜를 입력해주세요.' };
+  }
+  if (!isValidIsoDate(input.date)) {
+    return { ok: false, error: '날짜는 YYYY-MM-DD 형식으로 입력해주세요.' };
   }
 
   const partnerNickname =
