@@ -23,4 +23,8 @@ PO가 신청자 이메일 배치를 1Password 보관함 → 보안 채널로 App
 
 - 이름: `Beta-NAS23`
 - 빌드: NAS-23 베타 빌드 (AppDev가 별도 이슈에서 배포)
-- 만료: 베타 종료 + 7일 후 그룹 비활성화 및 멤버 제거
+- 생성 책임: AppDev (App Store Connect 접근 가능 시점에 1회 생성)
+
+## 종료 절차
+
+베타 종료 + 7일이 되는 날, AppDev는 App Store Connect → TestFlight → External Testers → `Beta-NAS23` 그룹의 모든 멤버를 제거하고 그룹을 비활성화한다. 완료 후 PO에 `tester_id` 단위로 결과 회신.
