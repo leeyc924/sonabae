@@ -14,6 +14,7 @@ import {
 import { Button } from '../components/Button';
 import { InputField } from '../components/InputField';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { track } from '../services/analytics';
 import {
   MatchDraft,
   MatchFormat,
@@ -36,6 +37,12 @@ export function MatchEntryScreen({ onCancel, onSaved }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const startedAtRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    void track('match_record_started');
+    startedAtRef.current = Date.now();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +95,11 @@ export function MatchEntryScreen({ onCancel, onSaved }: Props) {
       return;
     }
     await clearDraft();
+    void track('match_record_saved', {
+      duration_ms: Date.now() - startedAtRef.current,
+      doubles: draft.format === 'doubles',
+      has_memo: draft.memo.trim().length > 0,
+    });
     onSaved();
   };
 
