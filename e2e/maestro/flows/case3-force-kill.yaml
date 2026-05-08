@@ -1,0 +1,16 @@
+appId: ai.worxphere.sonabae
+name: NAS-26 case3 - force kill → relaunch (record outcome only)
+tags:
+  - nas-26
+  - autosave
+  - record-only
+---
+# Acceptance: case3 결과만 기록. 복원/소실 둘 다 통과 가능 — assertion 없음.
+# 실행 후 Maestro report 스크린샷으로 복원 여부를 시각 확인한다.
+- runFlow: _seed.yaml
+- stopApp
+- launchApp:
+    clearState: false
+- waitForAnimationToEnd:
+    timeout: 3000
+- takeScreenshot: case3-after-relaunch

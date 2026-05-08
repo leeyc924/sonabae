@@ -1,0 +1,18 @@
+appId: ai.worxphere.sonabae
+name: seed-match-entry-draft
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "경기 기록하기|새 경기 기록"
+- tapOn: "YYYY-MM-DD"
+- inputText: "2026-05-08"
+- tapOn: "비워두면 익명1"
+- inputText: "테스트A"
+- tapOn: "21"
+- inputText: "21"
+- tapOn: "15"
+- inputText: "15"
+- tapOn: "오늘 컨디션, 기억하고 싶은 한 장면"
+- inputText: "draft autosave probe"
+- hideKeyboard

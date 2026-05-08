@@ -1,0 +1,3 @@
+appId: ai.worxphere.sonabae
+---
+- runFlow: flows/_seed.yaml

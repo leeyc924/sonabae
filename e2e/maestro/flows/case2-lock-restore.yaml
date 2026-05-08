@@ -1,0 +1,16 @@
+appId: ai.worxphere.sonabae
+name: NAS-26 case2 - lock(inactive) → unlock restores draft
+tags:
+  - nas-26
+  - autosave
+---
+- runFlow: _seed.yaml
+# Lock simulator. iOS: `xcrun simctl ui booted appearance` does not lock; use `device lock` via `simctl` or shell:
+#   xcrun simctl io booted screenshot is not lock. Maestro `pressKey: Lock` works on Android only.
+# Strategy: drive to inactive via Home press + immediate relaunch (simulator-equivalent for inactive
+# state on iOS). On Android we use KEYCODE_POWER twice via runScript so it actually locks/unlocks.
+- runScript: ../scripts/lock-toggle.js
+- launchApp:
+    clearState: false
+- assertVisible: "테스트A"
+- assertVisible: "draft autosave probe"

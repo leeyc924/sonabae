@@ -1,0 +1,18 @@
+appId: ai.worxphere.sonabae
+name: NAS-26 case1 - background → relaunch restores draft
+tags:
+  - nas-26
+  - autosave
+---
+- runFlow: _seed.yaml
+- pressKey: Home
+- waitForAnimationToEnd:
+    timeout: 2000
+- launchApp:
+    clearState: false
+- assertVisible: "테스트A"
+- assertVisible: "draft autosave probe"
+- assertVisible:
+    text: "21"
+- assertVisible:
+    text: "15"
