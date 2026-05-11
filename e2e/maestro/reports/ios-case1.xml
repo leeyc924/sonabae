@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<testsuites>
+  <testsuite name="Test Suite" device="Medium_Phone_API_36.0" tests="1" failures="1" time="13.0">
+    <testcase id="NAS-26 case1 - background → relaunch restores draft" name="NAS-26 case1 - background → relaunch restores draft" classname="NAS-26 case1 - background → relaunch restores draft" time="13.0" status="ERROR">
+      <properties>
+        <property name="tags" value="nas-26, autosave"/>
+      </properties>
+      <failure>Unknown error</failure>
+    </testcase>
+  </testsuite>
+</testsuites>

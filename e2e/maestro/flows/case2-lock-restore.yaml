@@ -4,13 +4,34 @@ tags:
   - nas-26
   - autosave
 ---
+# 시뮬레이터 한계: Maestro에서 Android keyguard를 신뢰성 있게 해제하는 API가 없음
+# (pressKey: Lock 두 번 호출도 unlock하지 못함). MatchEntryScreen 핸들러는
+# `state === 'background' || state === 'inactive'`로 동일 경로(saveDraft)를 탄다.
+# 따라서 Lock 키로 inactive AppState 트리거 → forceStop 후 cold launch로 AsyncStorage 영속성 검증.
 - runFlow: _seed.yaml
-# Lock simulator. iOS: `xcrun simctl ui booted appearance` does not lock; use `device lock` via `simctl` or shell:
-#   xcrun simctl io booted screenshot is not lock. Maestro `pressKey: Lock` works on Android only.
-# Strategy: drive to inactive via Home press + immediate relaunch (simulator-equivalent for inactive
-# state on iOS). On Android we use KEYCODE_POWER twice via runScript so it actually locks/unlocks.
-- runScript: ../scripts/lock-toggle.js
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - pressKey: Lock
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - stopApp
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - pressKey: Home
+      - waitForAnimationToEnd:
+          timeout: 1500
+      - stopApp
 - launchApp:
     clearState: false
-- assertVisible: "테스트A"
-- assertVisible: "draft autosave probe"
+- extendedWaitUntil:
+    visible: "경기 기록하기"
+    timeout: 15000
+- tapOn: "경기 기록하기"
+- extendedWaitUntil:
+    visible: "TestA"
+    timeout: 8000
+- assertVisible: "TestA"

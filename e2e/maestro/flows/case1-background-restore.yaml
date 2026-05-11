@@ -10,9 +10,19 @@ tags:
     timeout: 2000
 - launchApp:
     clearState: false
-- assertVisible: "테스트A"
-- assertVisible: "draft autosave probe"
+- extendedWaitUntil:
+    visible: "경기 기록하기"
+    timeout: 10000
+- tapOn: "경기 기록하기"
+- extendedWaitUntil:
+    visible: "TestA"
+    timeout: 8000
 - assertVisible:
     text: "21"
 - assertVisible:
     text: "15"
+- scrollUntilVisible:
+    element:
+      text: "draft autosave probe"
+    direction: DOWN
+    timeout: 5000

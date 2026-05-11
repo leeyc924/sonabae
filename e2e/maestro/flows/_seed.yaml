@@ -3,12 +3,14 @@ name: seed-match-entry-draft
 ---
 - launchApp:
     clearState: true
-- tapOn:
-    text: "경기 기록하기|새 경기 기록"
+- extendedWaitUntil:
+    visible: "경기 기록하기"
+    timeout: 20000
+- tapOn: "경기 기록하기"
 - tapOn: "YYYY-MM-DD"
 - inputText: "2026-05-08"
 - tapOn: "비워두면 익명1"
-- inputText: "테스트A"
+- inputText: "TestA"
 - tapOn: "21"
 - inputText: "21"
 - tapOn: "15"
