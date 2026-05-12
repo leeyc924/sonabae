@@ -10,6 +10,8 @@ export type MatchContext = 'MEETING' | 'TOURNAMENT';
 
 export type EventType = 'MS' | 'WS' | 'MD' | 'WD' | 'XD' | 'OTHER';
 
+export type Gender = 'MALE' | 'FEMALE' | 'OTHER';
+
 export type UserProfile = {
   id: ID;
   nickname: string;
@@ -23,6 +25,7 @@ export type Person = {
   id: ID;
   userId: ID;
   name: string;
+  gender?: Gender;
   level?: string;
   meetingIds?: ID[];
   memo?: string;
@@ -34,6 +37,7 @@ export type Meeting = {
   id: ID;
   userId: ID;
   name: string;
+  placeIds?: ID[];
   placeId?: ID;
   location?: string;
   defaultDayOfWeek?: string;

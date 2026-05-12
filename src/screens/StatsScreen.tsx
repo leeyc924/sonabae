@@ -107,7 +107,14 @@ export function StatsScreen() {
                 <Card style={selectedPersonId === item.person.id ? styles.selectedCard : undefined}>
                   <Text style={styles.itemTitle}>{item.person.name}{item.person.level ? ` · ${item.person.level}` : ''}</Text>
                   <MetaText>{item.totalMatches}경기 · {item.wins}승 {item.losses}패 · 승률 {formatWinRate(item.winRate)}</MetaText>
-                  <MetaText>파트너 {formatWinRate(item.partner.winRate)} · 상대 {formatWinRate(item.opponent.winRate)}</MetaText>
+                  <PersonRoleSplit
+                    partnerWins={item.partner.wins}
+                    partnerLosses={item.partner.losses}
+                    partnerRate={item.partner.winRate}
+                    opponentWins={item.opponent.wins}
+                    opponentLosses={item.opponent.losses}
+                    opponentRate={item.opponent.winRate}
+                  />
                 </Card>
               </Pressable>
             ))
@@ -117,10 +124,15 @@ export function StatsScreen() {
           {selectedPerson ? (
             <Card style={styles.detailCard}>
               <Text style={styles.detailTitle}>{selectedPerson.person.name} 상세</Text>
-              <View style={styles.statGrid}>
-                <StatCard label="파트너 승률" value={formatWinRate(selectedPerson.partner.winRate)} helper={`${selectedPerson.partner.wins}승 ${selectedPerson.partner.losses}패`} />
-                <StatCard label="상대 승률" value={formatWinRate(selectedPerson.opponent.winRate)} helper={`${selectedPerson.opponent.wins}승 ${selectedPerson.opponent.losses}패`} tone="accent" />
-              </View>
+              <PersonRoleSplit
+                partnerWins={selectedPerson.partner.wins}
+                partnerLosses={selectedPerson.partner.losses}
+                partnerRate={selectedPerson.partner.winRate}
+                opponentWins={selectedPerson.opponent.wins}
+                opponentLosses={selectedPerson.opponent.losses}
+                opponentRate={selectedPerson.opponent.winRate}
+                large
+              />
               <MetaText>최근 경기일: {selectedPerson.lastPlayedAt || '-'}</MetaText>
               <MetaText>가장 많이 경기한 모임: {selectedPerson.topMeetingName || '-'}</MetaText>
             </Card>
@@ -203,6 +215,39 @@ export function StatsScreen() {
   );
 }
 
+function PersonRoleSplit({
+  partnerWins,
+  partnerLosses,
+  partnerRate,
+  opponentWins,
+  opponentLosses,
+  opponentRate,
+  large,
+}: {
+  partnerWins: number;
+  partnerLosses: number;
+  partnerRate: number;
+  opponentWins: number;
+  opponentLosses: number;
+  opponentRate: number;
+  large?: boolean;
+}) {
+  return (
+    <View style={[styles.roleGrid, large && styles.roleGridLarge]}>
+      <View style={[styles.rolePanel, styles.partnerPanel]}>
+        <Text style={styles.roleLabel}>내 파트너일 때</Text>
+        <Text style={[styles.roleRate, large && styles.roleRateLarge]}>{formatWinRate(partnerRate)}</Text>
+        <Text style={styles.roleMeta}>{partnerWins}승 {partnerLosses}패</Text>
+      </View>
+      <View style={[styles.rolePanel, styles.opponentPanel]}>
+        <Text style={styles.roleLabel}>상대일 때 내 승률</Text>
+        <Text style={[styles.roleRate, large && styles.roleRateLarge]}>{formatWinRate(opponentRate)}</Text>
+        <Text style={styles.roleMeta}>{opponentWins}승 {opponentLosses}패</Text>
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   header: {
     gap: spacing.xs,
@@ -274,5 +319,44 @@ const styles = StyleSheet.create({
   detailTitle: {
     ...typography.title,
     color: colors.textPrimary,
+  },
+  roleGrid: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  roleGridLarge: {
+    marginTop: 0,
+  },
+  rolePanel: {
+    borderRadius: 12,
+    flex: 1,
+    gap: spacing.xxs,
+    minHeight: 88,
+    padding: spacing.sm,
+  },
+  partnerPanel: {
+    backgroundColor: colors.primaryLight,
+  },
+  opponentPanel: {
+    backgroundColor: colors.accentSoft,
+  },
+  roleLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  roleRate: {
+    color: colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  roleRateLarge: {
+    fontSize: 30,
+  },
+  roleMeta: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

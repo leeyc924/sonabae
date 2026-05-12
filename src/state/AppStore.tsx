@@ -11,9 +11,9 @@ type ProfileInput = {
   targetLevel?: string;
 };
 
-type PersonInput = Pick<Person, 'name' | 'level' | 'meetingIds' | 'memo'>;
+type PersonInput = Pick<Person, 'name' | 'gender' | 'level' | 'meetingIds' | 'memo'>;
 
-type MeetingInput = Pick<Meeting, 'name' | 'placeId' | 'location' | 'defaultDayOfWeek' | 'memo'>;
+type MeetingInput = Pick<Meeting, 'name' | 'placeIds' | 'location' | 'defaultDayOfWeek' | 'memo'>;
 
 type TournamentInput = Pick<Tournament, 'name' | 'date' | 'level' | 'eventType' | 'partnerPersonId' | 'placeId' | 'resultLabel' | 'memo'>;
 
@@ -149,6 +149,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         id,
         userId: previous.userId,
         name: input.name.trim(),
+        gender: input.gender,
         level: input.level?.trim(),
         meetingIds: input.meetingIds,
         memo: input.memo?.trim(),
@@ -169,6 +170,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
           ? {
               ...person,
               name: input.name.trim(),
+              gender: input.gender,
               level: input.level?.trim(),
               meetingIds: input.meetingIds,
               memo: input.memo?.trim(),
@@ -197,7 +199,7 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
         id,
         userId: previous.userId,
         name: input.name.trim(),
-        placeId: input.placeId,
+        placeIds: input.placeIds,
         location: input.location?.trim(),
         defaultDayOfWeek: input.defaultDayOfWeek?.trim(),
         memo: input.memo?.trim(),
@@ -218,7 +220,8 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
           ? {
               ...meeting,
               name: input.name.trim(),
-              placeId: input.placeId,
+              placeIds: input.placeIds,
+              placeId: undefined,
               location: input.location?.trim(),
               defaultDayOfWeek: input.defaultDayOfWeek?.trim(),
               memo: input.memo?.trim(),
@@ -333,7 +336,16 @@ export function AppStoreProvider({ children }: PropsWithChildren) {
     setData((previous) => ({
       ...previous,
       places: previous.places.filter((place) => place.id !== id),
-      meetings: previous.meetings.map((meeting) => (meeting.placeId === id ? { ...meeting, placeId: undefined, updatedAt: nowISO() } : meeting)),
+      meetings: previous.meetings.map((meeting) =>
+        meeting.placeId === id || meeting.placeIds?.includes(id)
+          ? {
+              ...meeting,
+              placeId: meeting.placeId === id ? undefined : meeting.placeId,
+              placeIds: meeting.placeIds?.filter((placeId) => placeId !== id),
+              updatedAt: nowISO(),
+            }
+          : meeting,
+      ),
       tournaments: previous.tournaments.map((tournament) =>
         tournament.placeId === id ? { ...tournament, placeId: undefined, updatedAt: nowISO() } : tournament,
       ),

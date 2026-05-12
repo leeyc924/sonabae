@@ -19,7 +19,7 @@ import {
 } from '../components/ui';
 import { buildMeetingStats, buildPersonStats, buildTournamentStats, formatWinRate, getPlaceName } from '../data/stats';
 import { colors, levelOptions, spacing, typography } from '../theme';
-import type { EventType, Meeting, Person, Place, Tournament } from '../types';
+import type { EventType, Gender, Meeting, Person, Place, Tournament } from '../types';
 import { useAppStore } from '../state/AppStore';
 import { todayISODate } from '../utils/date';
 
@@ -27,6 +27,19 @@ type ManageArea = 'home' | 'people' | 'meetings' | 'tournaments' | 'places';
 type LocalMode = 'list' | 'form';
 
 const levelSelectOptions = levelOptions.map((level) => ({ label: level, value: level }));
+
+const genderSelectOptions: { label: string; value: Gender | '' }[] = [
+  { label: '선택 안 함', value: '' },
+  { label: '남성', value: 'MALE' },
+  { label: '여성', value: 'FEMALE' },
+  { label: '기타', value: 'OTHER' },
+];
+
+const genderLabels: Record<Gender, string> = {
+  MALE: '남성',
+  FEMALE: '여성',
+  OTHER: '기타',
+};
 
 const eventLabels: Record<EventType, string> = {
   MS: '남자 단식',
@@ -68,7 +81,7 @@ export function ManageScreen() {
       />
       <ManageEntry
         title="모임 관리"
-        body="자주 가는 모임과 기본 장소를 관리합니다."
+        body="자주 가는 모임과 자주 쓰는 장소들을 관리합니다."
         icon={<Building2 color={colors.primaryDark} size={22} />}
         onPress={() => setArea('meetings')}
       />
@@ -111,15 +124,17 @@ function PeopleManager({ onBack }: { onBack: () => void }) {
   const [mode, setMode] = useState<LocalMode>('list');
   const [editingId, setEditingId] = useState('');
   const [name, setName] = useState('');
+  const [gender, setGender] = useState<Gender | ''>('');
   const [level, setLevel] = useState('');
-  const [meetingId, setMeetingId] = useState('');
+  const [meetingIds, setMeetingIds] = useState<string[]>([]);
   const [memo, setMemo] = useState('');
 
   const openCreate = () => {
     setEditingId('');
     setName('');
+    setGender('');
     setLevel('');
-    setMeetingId('');
+    setMeetingIds([]);
     setMemo('');
     setMode('form');
   };
@@ -127,10 +142,17 @@ function PeopleManager({ onBack }: { onBack: () => void }) {
   const openEdit = (person: Person) => {
     setEditingId(person.id);
     setName(person.name);
+    setGender(person.gender ?? '');
     setLevel(person.level ?? '');
-    setMeetingId(person.meetingIds?.[0] ?? '');
+    setMeetingIds(person.meetingIds ?? []);
     setMemo(person.memo ?? '');
     setMode('form');
+  };
+
+  const toggleMeeting = (meetingId: string) => {
+    setMeetingIds((previous) =>
+      previous.includes(meetingId) ? previous.filter((id) => id !== meetingId) : [...previous, meetingId],
+    );
   };
 
   const save = () => {
@@ -140,7 +162,7 @@ function PeopleManager({ onBack }: { onBack: () => void }) {
     }
 
     try {
-      const input = { name, level, meetingIds: meetingId ? [meetingId] : undefined, memo };
+      const input = { name, gender: gender || undefined, level, meetingIds: meetingIds.length > 0 ? meetingIds : undefined, memo };
       if (editingId) {
         updatePerson(editingId, input);
         showToast('변경사항을 저장했어요.');
@@ -160,14 +182,31 @@ function PeopleManager({ onBack }: { onBack: () => void }) {
         <BackHeader title={editingId ? '사람 수정' : '사람 등록'} onBack={() => setMode('list')} />
         <Card style={styles.formCard}>
           <TextField label="이름 또는 별명" value={name} onChangeText={setName} placeholder="예: 김민수" />
-          <SelectBox label="급수" value={level} onChange={setLevel} placeholder="급수 선택" options={levelSelectOptions} />
           <SelectBox
-            label="소속 모임"
-            value={meetingId}
-            onChange={setMeetingId}
-            placeholder="모임 선택"
-            options={[{ label: '없음', value: '' }, ...data.meetings.map((meeting) => ({ label: meeting.name, value: meeting.id }))]}
+            label="성별"
+            value={gender}
+            onChange={(value) => setGender(value as Gender)}
+            placeholder="성별 선택"
+            options={genderSelectOptions}
           />
+          <SelectBox label="급수" value={level} onChange={setLevel} placeholder="급수 선택" options={levelSelectOptions} />
+          <View style={styles.fieldBlock}>
+            <Text style={styles.label}>소속 모임</Text>
+            {data.meetings.length > 0 ? (
+              <ChipGroup>
+                {data.meetings.map((meeting) => (
+                  <SelectChip
+                    key={meeting.id}
+                    label={meeting.name}
+                    selected={meetingIds.includes(meeting.id)}
+                    onPress={() => toggleMeeting(meeting.id)}
+                  />
+                ))}
+              </ChipGroup>
+            ) : (
+              <MetaText>모임을 먼저 등록하면 여러 모임을 연결할 수 있어요.</MetaText>
+            )}
+          </View>
           <TextField label="메모" value={memo} onChangeText={setMemo} placeholder="플레이 스타일, 주 포지션 등" multiline />
           <PrimaryButton label={editingId ? '수정하기' : '추가하기'} onPress={save} icon={<Save color={colors.surface} size={18} />} />
         </Card>
@@ -186,6 +225,8 @@ function PeopleManager({ onBack }: { onBack: () => void }) {
             <View style={styles.itemRow}>
               <View style={styles.itemMain}>
                 <Text style={styles.itemTitle}>{item.person.name}{item.person.level ? ` · ${item.person.level}` : ''}</Text>
+                {item.person.gender ? <MetaText>성별: {genderLabels[item.person.gender]}</MetaText> : null}
+                {item.person.meetingIds?.length ? <MetaText>소속 모임: {formatMeetingNames(data.meetings, item.person.meetingIds)}</MetaText> : null}
                 <MetaText>{item.totalMatches}경기 · {item.wins}승 {item.losses}패 · 승률 {formatWinRate(item.winRate)}</MetaText>
                 {item.topMeetingName ? <MetaText>자주 만난 모임: {item.topMeetingName}</MetaText> : null}
               </View>
@@ -207,7 +248,7 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
   const [mode, setMode] = useState<LocalMode>('list');
   const [editingId, setEditingId] = useState('');
   const [name, setName] = useState('');
-  const [placeId, setPlaceId] = useState('');
+  const [placeIds, setPlaceIds] = useState<string[]>([]);
   const [location, setLocation] = useState('');
   const [defaultDayOfWeek, setDefaultDayOfWeek] = useState('');
   const [memo, setMemo] = useState('');
@@ -215,7 +256,7 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
   const openCreate = () => {
     setEditingId('');
     setName('');
-    setPlaceId('');
+    setPlaceIds([]);
     setLocation('');
     setDefaultDayOfWeek('');
     setMemo('');
@@ -225,11 +266,15 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
   const openEdit = (meeting: Meeting) => {
     setEditingId(meeting.id);
     setName(meeting.name);
-    setPlaceId(meeting.placeId ?? '');
+    setPlaceIds(meeting.placeIds ?? (meeting.placeId ? [meeting.placeId] : []));
     setLocation(meeting.location ?? '');
     setDefaultDayOfWeek(meeting.defaultDayOfWeek ?? '');
     setMemo(meeting.memo ?? '');
     setMode('form');
+  };
+
+  const togglePlace = (placeId: string) => {
+    setPlaceIds((previous) => (previous.includes(placeId) ? previous.filter((id) => id !== placeId) : [...previous, placeId]));
   };
 
   const save = () => {
@@ -239,7 +284,7 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
     }
 
     try {
-      const input = { name, placeId: placeId || undefined, location, defaultDayOfWeek, memo };
+      const input = { name, placeIds: placeIds.length > 0 ? placeIds : undefined, location, defaultDayOfWeek, memo };
       if (editingId) {
         updateMeeting(editingId, input);
         showToast('변경사항을 저장했어요.');
@@ -259,14 +304,24 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
         <BackHeader title={editingId ? '모임 수정' : '모임 등록'} onBack={() => setMode('list')} />
         <Card style={styles.formCard}>
           <TextField label="모임명" value={name} onChangeText={setName} placeholder="예: 한강클럽" />
-          <SelectBox
-            label="기본 장소"
-            value={placeId}
-            onChange={setPlaceId}
-            placeholder="장소 선택"
-            options={[{ label: '선택 안 함', value: '' }, ...data.places.map((place) => ({ label: place.address ? `${place.name} · ${place.address}` : place.name, value: place.id }))]}
-          />
-          <TextField label="장소 메모" value={location} onChangeText={setLocation} placeholder="예: 3번 코트" />
+          <View style={styles.fieldBlock}>
+            <Text style={styles.label}>자주 쓰는 장소</Text>
+            {data.places.length > 0 ? (
+              <ChipGroup>
+                {data.places.map((place) => (
+                  <SelectChip
+                    key={place.id}
+                    label={place.address ? `${place.name} · ${place.address}` : place.name}
+                    selected={placeIds.includes(place.id)}
+                    onPress={() => togglePlace(place.id)}
+                  />
+                ))}
+              </ChipGroup>
+            ) : (
+              <MetaText>장소를 먼저 등록하면 모임에 여러 장소를 연결할 수 있어요.</MetaText>
+            )}
+          </View>
+          <TextField label="장소 메모" value={location} onChangeText={setLocation} placeholder="예: 요일마다 체육관이 바뀜" />
           <TextField label="주 활동 요일" value={defaultDayOfWeek} onChangeText={setDefaultDayOfWeek} placeholder="예: 수요일" />
           <TextField label="메모" value={memo} onChangeText={setMemo} placeholder="코트 수, 주차, 회비 등" multiline />
           <PrimaryButton label={editingId ? '수정하기' : '추가하기'} onPress={save} icon={<Save color={colors.surface} size={18} />} />
@@ -286,7 +341,8 @@ function MeetingManager({ onBack }: { onBack: () => void }) {
             <View style={styles.itemRow}>
               <View style={styles.itemMain}>
                 <Text style={styles.itemTitle}>{item.meeting.name}</Text>
-                <MetaText>{getPlaceName(data, item.meeting.placeId, item.meeting.location)} · {item.totalSessions}일 · {item.totalMatches}경기</MetaText>
+                <MetaText>자주 쓰는 장소: {formatPlaceNames(data.places, item.meeting.placeIds ?? (item.meeting.placeId ? [item.meeting.placeId] : []), item.meeting.location)}</MetaText>
+                <MetaText>{item.totalSessions}일 · {item.totalMatches}경기</MetaText>
                 <MetaText>{item.wins}승 {item.losses}패 · 승률 {formatWinRate(item.winRate)}</MetaText>
               </View>
               <RowActions onEdit={() => openEdit(item.meeting)} onDelete={() => confirmDelete('모임을 삭제할까요?', () => deleteMeeting(item.meeting.id), showToast)} />
@@ -537,6 +593,20 @@ function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => 
       </IconButton>
     </View>
   );
+}
+
+function formatMeetingNames(meetings: Meeting[], meetingIds: string[]): string {
+  return meetingIds
+    .map((meetingId) => meetings.find((meeting) => meeting.id === meetingId)?.name ?? '삭제된 모임')
+    .join(', ');
+}
+
+function formatPlaceNames(places: Place[], placeIds: string[], fallback?: string): string {
+  if (placeIds.length === 0) {
+    return fallback || '기록할 때마다 선택';
+  }
+
+  return placeIds.map((placeId) => places.find((place) => place.id === placeId)?.name ?? '삭제된 장소').join(', ');
 }
 
 function confirmDelete(title: string, onConfirm: () => void, showToast: (message: string, tone?: 'success' | 'error') => void) {

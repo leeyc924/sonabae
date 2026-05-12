@@ -272,6 +272,26 @@ function RecordForm({
   const numericScoreA = parseScore(scoreA);
   const numericScoreB = parseScore(scoreB);
   const computedResult = inferResult(numericScoreA, numericScoreB, manualResult, myTeam);
+  const selectedMeeting = data.meetings.find((meeting) => meeting.id === meetingId);
+  const selectedTournament = data.tournaments.find((tournament) => tournament.id === tournamentId);
+  const placeOptions = useMemo(() => {
+    const recommendedPlaceIds =
+      context === 'MEETING'
+        ? selectedMeeting?.placeIds ?? (selectedMeeting?.placeId ? [selectedMeeting.placeId] : [])
+        : selectedTournament?.placeId
+          ? [selectedTournament.placeId]
+          : [];
+    const recommended = recommendedPlaceIds
+      .map((id) => data.places.find((place) => place.id === id))
+      .filter((place): place is NonNullable<typeof place> => Boolean(place));
+    const rest = data.places.filter((place) => !recommendedPlaceIds.includes(place.id));
+
+    return [
+      { label: '선택 안 함', value: '' },
+      ...recommended.map((place) => ({ label: `추천 · ${place.address ? `${place.name} · ${place.address}` : place.name}`, value: place.id })),
+      ...rest.map((place) => ({ label: place.address ? `${place.name} · ${place.address}` : place.name, value: place.id })),
+    ];
+  }, [context, data.places, selectedMeeting?.placeId, selectedMeeting?.placeIds, selectedTournament?.placeId]);
   const recentPeople = useMemo(() => {
     const order = new Map<string, number>();
     data.matches.forEach((match, index) => {
@@ -436,12 +456,13 @@ function RecordForm({
         ) : null}
 
         <SelectBox
-          label="장소"
+          label="그날 장소"
           value={placeId}
           onChange={setPlaceId}
           placeholder="장소 선택"
-          options={[{ label: '선택 안 함', value: '' }, ...data.places.map((place) => ({ label: place.address ? `${place.name} · ${place.address}` : place.name, value: place.id }))]}
+          options={placeOptions}
         />
+        {context === 'MEETING' ? <MetaText>모임 장소는 기록할 때마다 다르게 선택할 수 있어요.</MetaText> : null}
         {data.places.length === 0 ? <MetaText>관리 탭에서 장소를 등록하면 기록에서 선택할 수 있어요.</MetaText> : null}
         <TextField label="장소 메모" value={location} onChangeText={setLocation} placeholder="임시 장소명 또는 코트 정보" />
         <TextField label="세션 메모" value={sessionMemo} onChangeText={setSessionMemo} placeholder="운동 시간, 컨디션 등" multiline />

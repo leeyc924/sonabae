@@ -27,12 +27,16 @@ function normalizePersistedData(data: Partial<AppData>): AppData {
     ...session,
     context: session.context ?? (session.tournamentId ? 'TOURNAMENT' : 'MEETING'),
   }));
+  const meetings = (data.meetings ?? []).map((meeting) => ({
+    ...meeting,
+    placeIds: meeting.placeIds ?? (meeting.placeId ? [meeting.placeId] : undefined),
+  }));
 
   return {
     userId,
     profile: data.profile,
     people: data.people ?? [],
-    meetings: data.meetings ?? [],
+    meetings,
     tournaments: data.tournaments ?? [],
     places: data.places ?? [],
     sessions,
